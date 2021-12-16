@@ -1,6 +1,6 @@
 param
 (
-    [string]$Zone = "Contoso.com",
+    [string]$Zone = "Contoso.org",
     [string]$ResultsPath = ".\"
 )
 
