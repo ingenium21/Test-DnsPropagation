@@ -1,6 +1,6 @@
 param
 (
-    [string]$Zone = "Contoso.org",
+    [string]$Zone = "contoso.com",
     [string]$ResultsPath = ".\"
 )
 
@@ -12,16 +12,18 @@ $Records = Get-DnsServerResourceRecord -ZoneName $Zone
 
 
 foreach ($rec in $Records) {
-    $ip = $Rec.RecordData.IPv4Address.IPAddressToString
-    $recObject = [PSCustomObject] [ordered] @{
-        Hostname = $rec.Hostname
-        Timestamp = $rec.Timestamp
-        TTL = $rec.TimeToLive
-        IPAddress = $ip
-        State = ((Test-Connection $ip -count 1 -ErrorAction SilentlyContinue).Status -ne "TimedOut")
-    }
+    if ($rec.RecordType -eq "A") {
+        $ip = $rec.RecordData.IPv4Address.IPAddressToString
+        $recObject = [PSCustomObject] [ordered] @{
+            Hostname = $rec.Hostname
+            Timestamp = $rec.Timestamp
+            TTL = $rec.TimeToLive
+            IPAddress = $ip
+            State = ((Test-Connection $ip -count 1 -ErrorAction SilentlyContinue).Status -ne "TimedOut")
+        }
 
-    $results += $recObject
+        $results += $recObject
+    }
 }
 
 $total=$results.count
@@ -40,5 +42,5 @@ write-host "    Dead Records: " -nonewline -foregroundcolor red
 $dead
 
 ""
-
-$results | ? {$_.State-ne "true"}
+$results | ConvertTo-Csv > .\results.csv
+$results | ? {$_.State -ne "true"}
