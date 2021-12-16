@@ -8,19 +8,6 @@ import-module DnsServer
 import-module DnsClient
 
 
-function test-Record ($Rec) {
-    $recData = $Rec.RecordData.IPv4Address.IPAddressToString
-
-    if ((test-connection $recData -count 1 -ErrorAction SilentlyContinue).Status -ne "TimedOut"){
-        return $true
-    }
-
-    else {
-        return $false
-    }
-}
-
-
 function main {
     $Records = Get-DnsServerResourceRecord -ZoneName $Zone
     $global:Successful = New-Object System.Collections.ArrayList
@@ -50,17 +37,17 @@ function main {
     foreach ($Rec in $Records) {
         if ($Rec.RecordType -eq "A"){
             #& $script -rec $Rec
-            Start-Job -ScriptBlock ($script -rec $args) -ArgumentList $Rec 
-            $RunningJobs = (Get-Job | ? {($_.State -eq "Running") -or ($_.State -eq "NotStarted")}).count
-            While($runningJobs -ne 0){
-                $runningJobs = (Get-Job | ? {($_.State -eq "Running") -or ($_.State -eq "NotStarted")}).count
+            Start-Job -ScriptBlock $script -InputObject $Rec
             }
         }
 
-
-    $Successful | Export-Csv -Path ($ResultsPath + "Successful.csv")
-    $failed | Export-Csv -Path ($ResultsPath+"Failed.csv")
+    $RunningJobs = (Get-Job | ? {($_.State -eq "Running") -or ($_.State -eq "NotStarted")}).count
+    While($runningJobs -ne 0){
+        $runningJobs = (Get-Job | ? {($_.State -eq "Running") -or ($_.State -eq "NotStarted")}).count
     }
+
+    $global:Successful | Export-Csv -Path ($ResultsPath + "Successful.csv")
+    $global:Successful | Export-Csv -Path ($ResultsPath + "Failed.csv")
 }
 #Entry point
 main
