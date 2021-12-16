@@ -1,6 +1,6 @@
 param
 (
-    [string]$Zone = "ironbow.support",
+    [string]$Zone = "Contoso.com",
     [string]$ResultsPath = ".\"
 )
 
