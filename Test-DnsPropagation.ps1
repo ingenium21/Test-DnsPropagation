@@ -10,21 +10,18 @@ import-module DnsClient
 $results = @()
 $Records = Get-DnsServerResourceRecord -ZoneName $Zone
 
-function new-Record ($rec) {
+
+foreach ($rec in $Records) {
     $ip = $Rec.RecordData.IPv4Address.IPAddressToString
-    $recObjet = [PSCustomObject] [ordered] @{
+    $recObject = [PSCustomObject] [ordered] @{
         Hostname = $rec.Hostname
         Timestamp = $rec.Timestamp
         TTL = $rec.TimeToLive
         IPAddress = $ip
-        $State = ((Test-Connection $recData -count 1 -ErrorAction SilentlyContinue).Status -ne "TimedOut")
-    }   
-    # return whatever you want, or don't.
-    return $recObject
-}
+        State = ((Test-Connection $ip -count 1 -ErrorAction SilentlyContinue).Status -ne "TimedOut")
+    }
 
-foreach ($rec in $Records) {
-    $results += new-Record (rec)
+    $results += $recObject
 }
 
 $total=$results.count
