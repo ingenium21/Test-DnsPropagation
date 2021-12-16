@@ -1,6 +1,7 @@
 param
 (
-    [string]$Zone = "Contoso.com"
+    [string]$Zone = "Contoso.com",
+    [string]$ResultsPath = ".\"
 )
 
 import-module DnsServer
@@ -43,6 +44,8 @@ function main {
         Get-Job | Remove-Job
     }
 
+    $Successful = Export-Csv -Path ($ResultsPath + "Successful.csv")
+    $failed = Export-Csv -Path ($ResultsPath+"Failed.csv")
 }
 
 #Entry point
