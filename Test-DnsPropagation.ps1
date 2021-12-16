@@ -37,14 +37,13 @@ $scriptblock = {
     [string]$rec
     )
     $ip = $Rec.RecordData.IPv4Address.IPAddressToString
-    $recObjet = [PSCustomObject] @{Hostname = $rec.Hostname
-        RecordType = $rec.RecordType
+    $recObjet = [PSCustomObject] [ordered] @{
+        Hostname = $rec.Hostname
         Timestamp = $rec.Timestamp
         TTL = $rec.TimeToLive
-        IpAddress = $ip
-        State = (Test-Connection $recData -count 1 -ErrorAction SilentlyContinue).Status -ne "TimedOut")
-    }
-        
+        IPAddress = $ip
+        $State = ((Test-Connection $recData -count 1 -ErrorAction SilentlyContinue).Status -ne "TimedOut")
+    }   
     # return whatever you want, or don't.
     return $recObject
 }
