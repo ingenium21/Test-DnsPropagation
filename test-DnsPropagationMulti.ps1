@@ -14,17 +14,10 @@ $runspacePool.Open()
 
 $codeContainer = {
     param(
-        $rec
+        $recObject
     )
-
-    $ip = $rec.RecordData.IPv4Address.IPAddressToString
-        $recObject = [PSCustomObject] [ordered] @{
-            Hostname = $rec.Hostname
-            Timestamp = $rec.Timestamp
-            TTL = $rec.TimeToLive
-            IPAddress = $ip
-            State = ((Test-Connection $ip -count 1 -ErrorAction SilentlyContinue).Status -ne "TimedOut")
-        }
+        
+        $recObject.State = Test-Connection $recObject.IPAddress -Count 1 -TimeToLive 10 -Quiet
 
     return $recObject
 }
@@ -34,16 +27,25 @@ $threads = @() #empty array that holds different objects that Threads spin up
 $records = Get-DnsServerResourceRecord -ZoneName $Zone
 
 foreach ($rec in $records) {
-
-    $runspaceObject = [PSCustomObject]@{
-        Runspace = [PowerShell]::Create()
-        Invoker = $null
+    if ($rec.RecordType -eq "A") {
+        $ip = $rec.RecordData.IPv4Address.IPAddressToString
+        $recObject = [PSCustomObject] [ordered] @{
+            Hostname = $rec.Hostname
+            Timestamp = $rec.Timestamp
+            TTL = $rec.TimeToLive
+            IPAddress = $ip
+            State = $false
+        }
+        $runspaceObject = [PSCustomObject]@{
+            Runspace = [PowerShell]::Create()
+            Invoker = $null
+        }
+        $runspaceObject.Runspace.RunSpacePool = $runspacePool
+        $runspaceObject.Runspace.AddScript($codeContainer) | Out-Null
+        $runspaceObject.Runspace.AddArgument($recObject) | Out-Null
+        $runspaceObject.Invoker = $runspaceObject.Runspace.BeginInvoke()
+        $threads += $runspaceObject
     }
-    $runspaceObject.Runspace.RunSpacePool = $runspacePool
-    $runspaceObject.Runspace.AddScript($codeContainer) | Out-Null
-    $runspaceObject.Runspace.AddArgument($rec) | Out-Null
-    $runspaceObject.Invoker = $runspaceObject.Runspace.BeginInvoke()
-    $threads += $runspaceObject
 }
 
 Write-Host "Runspaces running ..."
@@ -54,6 +56,8 @@ Foreach ($t in $threads) {
     $threadResults += $t.Runspace.EndInvoke($t.Invoker)
     $t.Runspace.Dispose()
 }
+
+$threadResults | ConvertTo-Csv -path ($ResultsPath+"results.csv")
 
 $runspacePool.Close()
 $runspacePool.Dispose()
