@@ -59,5 +59,24 @@ Foreach ($t in $threads) {
 
 $threadResults | ConvertTo-Csv -path ($ResultsPath+"results.csv")
 
+$total=$threadResults.count
+$alive = $($threadResults | ? {$_.State -eq "true"}).count
+$dead = $($resthreadResultsults | ? {$_.State-ne "true"}).count
+
+$Host.UI.RawUI.CursorPosition = New-Object System.Management.Automation.Host.Coordinates 0 , 5
+
+write-host "   Total Records: " -nonewline -foregroundcolor cyan
+$total
+
+write-host "   Alive Records: " -nonewline -foregroundcolor green
+$alive
+
+write-host "    Dead Records: " -nonewline -foregroundcolor red
+$dead
+
+""
+$results | ConvertTo-Csv > .\results.csv
+
+
 $runspacePool.Close()
 $runspacePool.Dispose()
