@@ -50,7 +50,6 @@ foreach ($rec in $records) {
 
 Write-Host "Runspaces running ..."
 while ($threads.Invoker.IsCompleted -contains $false){}
-Write-Host "All runspaces completed"
 
 $threadResults = @()
 Foreach ($t in $threads) {
@@ -61,6 +60,9 @@ Foreach ($t in $threads) {
 $threadResults | ConvertTo-Csv > ($ResultsPath+"results.csv")
 
 Clear-Host
+""
+Write-Host "All runspaces completed"
+""
 
 $total=$threadResults.count
 $alive = $($threadResults | ? {$_.State -eq $true}).count
