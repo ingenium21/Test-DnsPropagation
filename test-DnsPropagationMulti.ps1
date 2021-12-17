@@ -49,6 +49,7 @@ foreach ($rec in $records) {
 }
 
 Write-Host "Runspaces running ..."
+while ($threads.Invoker.IsCompleted -contains $false){}
 Write-Host "All runspaces completed"
 
 $threadResults = @()
@@ -57,11 +58,13 @@ Foreach ($t in $threads) {
     $t.Runspace.Dispose()
 }
 
-$threadResults | ConvertTo-Csv -path ($ResultsPath+"results.csv")
+$threadResults | ConvertTo-Csv > ($ResultsPath+"results.csv")
+
+Clear-Host
 
 $total=$threadResults.count
-$alive = $($threadResults | ? {$_.State -eq "true"}).count
-$dead = $($resthreadResultsults | ? {$_.State-ne "true"}).count
+$alive = $($threadResults | ? {$_.State -eq $true}).count
+$dead = $($threadResults | ? {$_.State -ne $true}).count
 
 $Host.UI.RawUI.CursorPosition = New-Object System.Management.Automation.Host.Coordinates 0 , 5
 
@@ -71,11 +74,8 @@ $total
 write-host "   Alive Records: " -nonewline -foregroundcolor green
 $alive
 
-write-host "    Dead Records: " -nonewline -foregroundcolor red
+write-host "   Dead Records: " -nonewline -foregroundcolor red
 $dead
-
-""
-$results | ConvertTo-Csv > .\results.csv
 
 
 $runspacePool.Close()
